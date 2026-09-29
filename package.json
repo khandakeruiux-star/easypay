@@ -4,6 +4,9 @@
   "version": "1.0.0",
   "description": "EasyPay — an AI-powered personal finance dashboard (Vite + React).",
   "type": "module",
+  "engines": {
+    "node": "20.x"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

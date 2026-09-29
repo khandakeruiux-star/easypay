@@ -12,6 +12,7 @@ easypay/
 ├── tailwind.config.js
 ├── postcss.config.js
 ├── vercel.json
+├── .npmrc
 ├── .gitignore
 ├── README.md
 └── src/
@@ -36,8 +37,6 @@ Below, "the project folder" means the folder you get after unzipping the file I 
 ```bash
 cd path/to/easypay
 ```
-
-(Replace `path/to/easypay` with wherever you unzipped it — e.g. `cd ~/Downloads/easypay`.)
 
 **2. Turn this folder into a git repository**
 
@@ -65,16 +64,20 @@ git remote add origin https://github.com/khandakeruiux-star/easypay.git
 git push -u origin main
 ```
 
-If GitHub asks you to log in, follow its prompts (browser login, or a personal access token if it asks for a password — GitHub stopped accepting plain passwords for this a while ago, so if a password fails, search "GitHub personal access token" and use that instead).
+If you already pushed once before and are updating, just run:
 
-If it says something like `error: failed to push... fetch first` (this can happen if the repo already has a README or license file created on GitHub's website), run this instead:
+```bash
+git add .
+git commit -m "Fix Vercel build"
+git push
+```
+
+If `git push` complains the remote already has history you don't have locally (e.g. `fetch first`):
 
 ```bash
 git pull origin main --allow-unrelated-histories
 git push -u origin main
 ```
-
-That's it — refresh your GitHub repo page and you should see all the files.
 
 ---
 
@@ -85,7 +88,7 @@ npm install
 npm run dev
 ```
 
-Open the URL it prints (usually `http://localhost:5173`) and you should see EasyPay running.
+Open the URL it prints (usually `http://localhost:5173`).
 
 To build the production version:
 
@@ -98,29 +101,44 @@ npm run preview
 
 ## Part 3 — Deploy to Vercel
 
-1. Go to [vercel.com](https://vercel.com) and sign up / log in — the easiest way is "Continue with GitHub" so it can see your repos.
-2. Click **Add New → Project**.
-3. Find and select your `easypay` repo, then click **Import**.
-4. Vercel will auto-detect this as a Vite project. You shouldn't need to change anything — the settings below are already set in this project's `vercel.json`, but for reference:
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-   - **Install Command:** `npm install`
-5. Click **Deploy** and wait a minute or two.
-6. When it finishes, Vercel gives you a live URL (something like `easypay.vercel.app`) — that's your app, live on the internet.
+1. Go to [vercel.com](https://vercel.com) and log in with "Continue with GitHub".
+2. Click **Add New → Project**, select your `easypay` repo, click **Import**.
+3. Vercel auto-detects this as a Vite project (settings are also pinned in `vercel.json`: build command `npm run build`, output directory `dist`).
+4. Click **Deploy**.
+5. You'll get a live link like `easypay.vercel.app`.
 
-No environment variables are needed — everything in this app is local mock data.
+No environment variables are needed.
 
-From now on, every time you push new commits to the `main` branch on GitHub, Vercel will automatically redeploy the site.
+If you already have a Vercel project connected to this repo, pushing new commits to `main` triggers an automatic redeploy — you don't need to reconnect anything.
+
+---
+
+## Troubleshooting: "npm warn allow-scripts" / esbuild during Vercel build
+
+If your Vercel build log shows something like:
+
+```
+npm warn allow-scripts 1 package has install scripts not yet covered by allowScripts:
+npm warn allow-scripts   esbuild@0.21.5 (postinstall: node install.js)
+```
+
+That's npm refusing to automatically run a dependency's install script. It's a warning, not always a hard failure by itself — but `esbuild`'s postinstall script is what downloads the correct native binary for the build machine, and if it's skipped, the `vite build` step right after can fail because the `esbuild` binary is missing.
+
+This project already includes two fixes for it:
+- **`.npmrc`** with `ignore-scripts=false`, which explicitly tells npm to run install scripts.
+- **`package.json`** pins `"engines": { "node": "20.x" }`, so Vercel uses a consistent, known-good Node version instead of whatever its current default happens to be.
+
+If you still see this after redeploying with these files in place, check the rest of the build log for a line containing the word `Error` (search the page for "Error") — that's the actual failure reason, and it'll be below this warning, not in it.
 
 ---
 
 ## Notes
 
 - This is a front-end prototype: there's no backend, authentication, or database. Refreshing the page resets any in-memory changes (form edits, toggles, etc.) back to the mock defaults.
-- If you make changes in Claude later and want to update your live site, just replace the files in your local project folder with the new ones, then run:
+- To update your live site after making changes: replace the files in your local project folder, then:
   ```bash
   git add .
-  git commit -m "Update from Claude"
+  git commit -m "Update"
   git push
   ```
-  Vercel will pick up the push and redeploy automatically.
+  Vercel redeploys automatically.
