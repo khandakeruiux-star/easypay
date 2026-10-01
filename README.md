@@ -113,6 +113,22 @@ If you already have a Vercel project connected to this repo, pushing new commits
 
 ---
 
+## Troubleshooting: "Rollup failed to resolve import /src/main.jsx"
+
+If the Vercel build log shows:
+
+```
+error during build:
+[vite]: Rollup failed to resolve import "/src/main.jsx" from "/vercel/path0/index.html".
+```
+
+This means `index.html`'s script tag pointed to `/src/main.jsx` (absolute from project root), and something about the build environment's root directory didn't line up with that. This project fixes it two ways:
+
+- **`index.html`** now references `./src/main.jsx` (relative to `index.html` itself) instead of `/src/main.jsx` (absolute) — this resolves correctly regardless of how the build root is detected.
+- **`vite.config.js`** explicitly pins `root` to the folder containing the config file, so Vite always knows exactly where the project root is, no matter what directory the build command is run from.
+
+**Also double-check your GitHub repo's file layout.** Open your repo on github.com and confirm `index.html`, `package.json`, and the `src/` folder are sitting at the **top level** of the repo — not nested one level deeper inside another folder (e.g. `easypay/easypay/index.html`). This happens if you accidentally ran `git init`/`git add` from the folder *containing* the unzipped project instead of from inside it. If that's the case: delete everything in the repo, re-extract the zip, `cd` directly into the folder that has `package.json` in it, and redo the git steps from Part 1.
+
 ## Troubleshooting: "npm warn allow-scripts" / esbuild during Vercel build
 
 If your Vercel build log shows something like:
